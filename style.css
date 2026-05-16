@@ -1,0 +1,1709 @@
+/* ==========================================================================
+   1. VARIABLES & RESET
+   ========================================================================== */
+:root {
+  --crimson: #8B1A2A;
+  --dark-crimson: #6B0F1E;
+  --light-crimson: #C4435A;
+  --blush: #F5E8E8;
+  --light-blush: #FDF5F5;
+  --white: #FFFFFF;
+  --text-dark: #3D1019;
+}
+
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+}
+
+html { 
+  scroll-behavior: smooth; 
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: var(--light-blush);
+  color: var(--text-dark);
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+}
+.main-wrapper {
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--light-blush);
+  position: relative;
+}
+
+/* ==========================================================================
+   
+2. GLOBAL / REUSABLE COMPONENTS
+   ========================================================================== */
+
+
+
+
+/* --- КОНТЕЙНЕР МУЗЫКИ --- */
+.music-wrap {
+  position: fixed;
+top: -8px;
+right: -2px;
+  z-index: 1000;
+  width: 110px; /* Размер контейнера увеличен, чтобы текст помещался вокруг */
+  height: 110px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+/* --- САМА КНОПКА (Плотный благородный бордовый) --- */
+#music-btn {
+  width: 46px;
+  height: 46px;
+  border: 2px solid #ff0000; /* Золотой ободок */
+  border-radius: 50%;
+  background: transparent;
+  backdrop-filter: blur(1px);
+  color: #5e4b24c4; /* Золотистый цвет для иконки ноты */
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10; /* Кнопка строго поверх крутящегося текста */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#music-btn:active {
+  transform: scale(0.92);
+}
+
+/* --- ОБЕРТКА ДЛЯ SVG ТЕКСТА --- */
+.music-text-circle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none; /* Клик проходит сквозь текст прямо на кнопку */
+  opacity: 0; /* Изначально надпись "Пауза" скрыта */
+  transform: scale(0.8);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Стилизация шрифта внутри SVG */
+.rotating-text {
+  font-family: 'Cinzel', 'Georgia', serif;
+  font-size: 5px;
+  font-weight: 500;
+  fill: #d4af37; /* Золотой цвет букв */
+  letter-spacing: 4px; /* Элегантный разряд букв */
+  text-transform: uppercase;
+}
+
+/* --- ДИНАМИКА: КОГДА МУЗЫКА ИГРАЕТ (кнопка имеет класс .playing) --- */
+
+/* 1. Плавно показываем круг с текстом */
+#music-btn.playing ~ .music-text-circle {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 2. Запускаем бесконечное вращение SVG по часовой стрелке */
+#music-btn.playing ~ .music-text-circle svg {
+  animation: spinMusicText 12s linear infinite; /* 12 секунд на один полный оборот (очень плавно) */
+}
+
+/* 3. Кнопка во время игры мягко пульсирует */
+#music-btn.playing {
+  animation: musicBtnBreathe 2.5s infinite ease-in-out;
+  border-color: #ffe8b3;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), 0 6px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* 4. Запуск фоновых волн для дополнительного объема */
+.music-wave {
+  position: absolute;
+  width: 43px;
+  height: 43px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#music-btn.playing ~ .wave-1 {
+  animation: musicWavePulse 2.5s infinite ease-out;
+}
+#music-btn.playing ~ .wave-2 {
+  animation: musicWavePulse 2.5s infinite ease-out;
+  animation-delay: 1.25s;
+}
+
+/* --- КЛЮЧЕВЫЕ КАДРЫ АНИМАЦИЙ --- */
+
+/* Вращение надписи */
+@keyframes spinMusicText {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Дыхание кнопки */
+@keyframes musicBtnBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+/* Импульс фоновых волн */
+@keyframes musicWavePulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Скрываем весь блок на стартовом оверлее, пока конверт не открыт */
+body.no-scroll .music-wrap {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+
+
+
+/* Фоновый экран на весь экран */
+.intro-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.2); /* Полупрозрачный фон, чтобы блюр был виден */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 999999 !important;
+  
+  /* Используем flex-column, чтобы элементы выстраивались сверху вниз */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Центрирует содержимое по вертикали */
+  align-items: center;     /* Центрирует по горизонтали */
+  
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+  opacity: 1;
+  visibility: visible;
+  box-sizing: border-box;
+  padding: 40px 20px; /* Отступы от краев экрана, чтобы текст не прилипал */
+}
+
+/* СТИЛИЗАЦИЯ ЗАГЛОВКА H1 СВЕРХУ */
+.intro-title {
+  position: absolute;
+  top: 10%; /* Закрепляем заголовок в верхней части экрана */
+  font-family: 'Cinzel', 'Georgia', serif; /* Благородный классический шрифт */
+  font-size: 32px; /* На смартфонах будет смотреться отлично */
+  font-weight: 400;
+  color: #f1dfbc; /* Нежно-золотой цвет */
+  text-transform: uppercase; /* Все буквы заглавные */
+  letter-spacing: 6px; /* Красивое свадебное расстояние между буквами */
+  margin: 0;
+  text-align: center;
+  
+  /* Тонкая дорогая тень у текста (эффект легкого свечения) */
+  text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+  
+  /* Текст тоже плавно исчезнет вместе с конвертом */
+  transition: opacity 0.6s ease; 
+}
+
+/* Контейнер ссылки-конверта */
+.envelope-click-target {
+  display: inline-block;
+  width: 450px; /* Ограничиваем невидимые поля картинки */
+  max-width: 111%;
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: scale(1);
+
+}
+
+/* Картинка конверта */
+.envelope-click-target img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none; /* Клики полностью игнорируют прозрачные поля */
+}
+
+/* СИНХРОННОЕ ИСЧЕЗНОВЕНИЕ ЭЛЕМЕНТОВ ПРИ КЛИКЕ */
+
+/* Конверт уменьшается и тает */
+.envelope-click-target.fade-out {
+  opacity: 0 !important;
+  transform: scale(0.7) !important;
+}
+
+/* Заголовок плавно растворяется при клике */
+.intro-overlay.fade-out-all .intro-title {
+  opacity: 0 !important;
+  transform: translateY(-20px); /* Слегка улетает вверх */
+  transition: all 0.6s ease;
+}
+
+/* Весь фон уходит в ноль */
+.intro-overlay.hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Запрет скролла */
+body.no-scroll {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+/* Блокировка скролла */
+body.no-scroll {
+  overflow: hidden;
+  height: 100vh;
+}
+/* ==========================================================================
+   3. HERO SECTION
+   ========================================================================== */
+
+   .scroll-arrows {
+  position: absolute;
+  top: 30px;
+  right: 60px;
+  z-index: 20;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  animation: arrowsVisible 8s infinite;
+}
+
+.scroll-arrows span {
+  width: 28px;
+  height: 28px;
+
+  border-left: 4px solid #9b1c31;
+  border-top: 4px solid #9b1c31;
+
+  transform: rotate(45deg);
+
+  animation: arrowUp 1.2s infinite ease-in-out;
+}
+
+.scroll-arrows span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.scroll-arrows span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* махание вверх */
+@keyframes arrowUp {
+  0%,100% {
+    opacity: 0.3;
+    transform: rotate(45deg) translate(0,0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: rotate(45deg) translate(-8px,-8px);
+  }
+}
+
+/* 5с видно + 3с скрыто */
+@keyframes arrowsVisible {
+  0% {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  62.5% {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+   
+.hero {
+
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  overflow: hidden;
+  padding-top: 70px;
+}
+
+.hero-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: clamp(18px, 5vw, 26px);
+  letter-spacing: 0.15em;
+  color: var(--crimson);
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeDown 1s ease forwards 0.3s;
+}
+
+.hero-name {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(80px, 14vw, 100px);
+  color: var(--crimson);
+  line-height: 1;
+  margin-bottom: 10px;
+  opacity: 0;
+  animation: fadeDown 1s ease forwards 0.6s;
+  padding-top: 10px;
+  padding-right: 150px;
+}
+
+.hero-subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: clamp(20px, 5vw, 28px);
+  letter-spacing: 0.12em;
+  color: var(--crimson);
+  text-align: center;
+  opacity: 0;
+  animation: fadeDown 1s ease forwards 0.9s;
+  padding-left: 30px;
+}
+
+.hero-date-badge {
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  padding: 12px 28px;
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(22px, 5vw, 30px);
+  color: var(--crimson);
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  line-height: 1.3;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  animation: fadeIn 1.2s ease forwards 1.4s;
+}
+
+.hero-flowers {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 420px;
+  margin-top: 10px;
+}
+
+.flower-svg { 
+  position: absolute; 
+  opacity: 0; 
+  animation: bloomIn 1.2s ease forwards; 
+}
+
+.fl-tl { top: 0; left: -10px; width: 180px; animation-delay: 0.8s; }
+.fl-tr { top: 20px; right: -10px; width: 170px; animation-delay: 1s; }
+.fl-bl { bottom: 80px; left: 10px; width: 120px; animation-delay: 1.2s; }
+
+.hand-silhouette {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  z-index: 3;
+  opacity: 0;
+  animation: riseUp 1.4s ease forwards 1s;
+}
+
+.red-silk-hero {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 200px;
+  background: linear-gradient(to top, rgba(180, 20, 40, 0.18) 0%, transparent 100%);
+  z-index: 1;
+}
+
+.silk-wave {
+  width: 100%; 
+  height: auto;
+  opacity: 0;
+  animation: fadeIn 1.5s ease forwards 0.5s;
+}
+
+/* ==========================================================================
+   4. INVITATION SCENE (INTERACTIVE / ANIMATED)
+   ========================================================================== */
+   /* Контейнер сцены */
+.invitation-scene {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 500px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* --- ЭЛЕМЕНТЫ ПОЯВЛЕНИЯ (ОБЕРТКИ) --- */
+.el-wrap {
+  position: absolute;
+  opacity: 0;
+  animation: appear 1.2s ease-out forwards;
+}
+
+.el-wrap img {
+  width: 100%;
+  display: block;
+}
+
+/* Позиционирование и задержки */
+.fl_top_left {
+  top: 5%;
+  left: -22%;
+  width: 60%;
+  z-index: 3;
+  animation-delay: 0.2s;
+}
+
+.fl_top_right {
+  top: 15%;
+  right: -15%;
+  width: 60%;
+  z-index: 1;
+  animation-delay: 0.4s;
+}
+
+.fl_mid_left {
+    bottom: 3.5%;
+  left: 5%;
+  width: 40%;
+  z-index: 1;
+  animation-delay: 0.6s;
+    animation: appear 1.2s ease-out forwards, sway1 8s ease-in-out infinite alternate;
+}
+
+/* --- ПОСТОЯННАЯ АНИМАЦИЯ И ХОВЕРЫ --- */
+
+/* Левый верхний: базовый поворот 50deg + покачивание */
+.sway-left {
+  transform: rotate(330deg);
+  transition: transform 0.3s ease;
+  animation: swayLeftAnimation 8s ease-in-out infinite alternate;
+}
+
+
+/* Правый верхний: базовый поворот -20deg + покачивание */
+.sway-right {
+  transform: rotate(-20deg);
+  transition: transform 0.3s ease;
+  animation: swayRightAnimation 8s ease-in-out infinite alternate;
+}
+.sway-right:hover {
+  transform: rotate(-20deg) scale(1.05) !important;
+}
+
+/* Средний левый: просто покачивание */
+.sway-mid {
+  transition: transform 0.3s ease;
+  animation: floatMid 9s ease-in-out infinite alternate;
+}
+.sway-mid:hover {
+  transform: scale(1.05);
+}
+
+/* --- РУКА --- */
+.hand-container {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  width: 60%;
+  z-index: 2;
+  opacity: 0;
+  /* Сохраняем центрирование translateX(-50%) внутри анимации */
+  animation: appearHand 1.5s ease-out forwards;
+  animation-delay: 0.8s;
+}
+
+.hand-img {
+  width: 100%;
+  display: block;
+  animation: floatingHand 5s ease-in-out infinite;
+}
+
+
+/* --- КЛЮЧЕВЫЕ КАДРЫ (KEYFRAMES) --- */
+
+/* Появление снизу для цветов */
+@keyframes appear {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Появление руки с сохранением центрирования по оси X */
+@keyframes appearHand {
+  from { opacity: 0; transform: translateX(-50%) translateY(60px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Парение руки (вверх-вниз) */
+@keyframes floatingHand {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+/* Мягкое покачивание левого цветка (сохраняем исходные 50deg) */
+@keyframes swayLeftAnimation {
+  from { transform: translateY(0) rotate(50deg); }
+  to   { transform: translateY(6px) rotate(53deg); }
+}
+
+/* Мягкое покачивание правого цветка (сохраняем исходные -20deg) */
+@keyframes swayRightAnimation {
+  from { transform: translateY(0) rotate(-20deg); }
+  to   { transform: translateY(6px) rotate(-17deg); }
+}
+
+/* Легкий сдвиг для мид-левого цветка */
+@keyframes floatMid {
+  from { transform: translateY(0); }
+  to   { transform: translateY(5px); }
+}
+
+
+.el {
+  position: absolute;
+  opacity: 0;
+  animation: appear 1.2s ease-out forwards;
+}
+
+
+/* Floral Elements */
+.fl_top_left {
+  animation: appear 1.2s ease-out forwards, sway 8s ease-in-out infinite alternate;
+}
+/* .fl_top_left {
+  top: 5%;
+  left: -10%;
+  width: 60%;
+  z-index: 1;
+  animation-delay: 0.2s;
+  transform: rotate(50deg);
+  transition: transform 0.3s ease;
+}
+
+.fl_top_left img {
+  animation: floatLeft 8s ease-in-out infinite alternate;
+}
+
+.fl_top_left:hover {
+  transform: rotate(50deg) scale(1.05);
+}
+
+/* Правый верхний элемент (класс-обертка для позиционирования и появления) */
+.fl-top-right {
+  top: 15%;
+  right: -15%;
+  width: 60%;
+  z-index: 1;
+  animation-delay: 0.4s;
+}
+.fl_top_right:hover {
+  transform: rotate(-20deg) scale(1.05);
+}
+
+.fl-mid-left {
+  bottom: 25%;
+  left: 5%;
+  width: 40%;
+  z-index: 1;
+  animation-delay: 0.6s;
+}
+
+.fl-mid-left img {
+  animation: floatMid 9s ease-in-out infinite alternate;
+}
+
+.hand-img {
+  width: 100%;
+  animation: floating 5s ease-in-out infinite;
+}
+
+
+.silk-divider {
+  position: relative;
+  width: 100%;
+  height: 0; /* Контейнер не занимает места, чтобы картинка не создавала пустых отступов */
+  z-index: 10; /* Поднимаем над текстовыми блоками */
+}
+.silk-divider img {
+
+    width: 100%;
+    height: auto;
+    right: 40px;
+    top: -178px; 
+}
+
+
+.silk-overlay-img {
+  position: absolute;
+  top: -50px; /* Сдвиг вверх, чтобы плавно накрыть предыдущую секцию (подбери под свой дизайн) */
+  left: 0;
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none; /* Чтобы картинка не мешала кликать по кнопкам/ссылкам под ней */
+  
+  /* Эффект мягкого растворения краев (если картинка резко обрывается) */
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+}
+
+/* ==========================================================================
+   5. INVITATION TEXT SECTION
+   ========================================================================== */
+.invite-section {
+  background: var(--blush);
+  padding: 100px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.invite-date-big {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(52px, 12vw, 72px);
+  color: var(--crimson);
+  line-height: 1;
+  margin-bottom: 30px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.invite-greeting {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(28px, 7vw, 40px);
+  color: var(--crimson);
+  margin-bottom: 8px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease 0.2s, transform 0.8s ease 0.2s;
+}
+
+.invite-bold {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: clamp(18px, 4vw, 22px);
+  letter-spacing: 0.1em;
+  color: var(--crimson);
+  margin-bottom: 30px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+}
+
+.invite-text {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: clamp(12px, 3.5vw, 14px);
+  line-height: 1.9;
+  letter-spacing: 0.06em;
+  color: var(--crimson);
+  text-transform: uppercase;
+  max-width: 340px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+}
+
+/* ==========================================================================
+   6. VENUE SECTION
+   ========================================================================== */
+.venue-section {
+  background: var(--white);
+  padding: 60px 35px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.venue-cursive {
+ font-family: 'Great Vibes', cursive;
+  font-size: clamp(45px, 7vw, 50px);
+  color: var(--crimson);
+  line-height: 1.2;
+  margin-bottom: 6px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  display: flex;
+  align-items: start;
+}
+
+.venue-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+font-size: 50px;
+  letter-spacing: 0.08em;
+  color: var(--crimson);
+  margin: 10px 0;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease 0.2s, transform 0.8s ease 0.2s;
+}
+.venue-sub {
+  /* ШРИФТ И СТИЛЬ */
+  font-family: 'Montserrat', sans-serif;
+  font-size: 19px;            /* Мелкий размер как на фото */
+  font-weight: 600;           /* Средняя жирность */
+  text-transform: uppercase;  /* Все заглавные */
+  letter-spacing: 0.4em;      /* Сильный разлет букв для премиального вида */
+  color: var(--crimson);
+  
+  /* ПОЗИЦИОНИРОВАНИЕ */
+  margin-bottom: 24px;
+  text-align: end;
+  display: block;             /* Чтобы margin работал корректно */
+
+  /* АНИМАЦИЯ ПОЯВЛЕНИЯ */
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+}
+.venue-sub_name{
+ /* ШРИФТ И СТИЛЬ */
+  font-family: 'Montserrat', sans-serif;
+  font-size: 19px;            /* Мелкий размер как на фото */
+  font-weight: 600;           /* Средняя жирность */
+  text-transform: uppercase;  /* Все заглавные */
+  letter-spacing: 0.4em;      /* Сильный разлет букв для премиального вида */
+  color: var(--crimson);
+  
+  /* ПОЗИЦИОНИРОВАНИЕ */
+  margin-bottom: 24px;
+  text-align: center;
+  display: block;             /* Чтобы margin работал корректно */
+
+  /* АНИМАЦИЯ ПОЯВЛЕНИЯ */
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+}
+.venue-2gis {
+  display: inline-block;
+  background: var(--crimson);
+  color: var(--white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  padding: 10px 28px;
+  border-radius: 50px;
+  text-decoration: none;
+  margin: 20px 0;
+  transition: background 0.2s;
+}
+
+.venue-2gis:hover { 
+  background: var(--dark-crimson); 
+}
+
+.venue-address {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  color: var(--crimson);
+  line-height: 1.6;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
+}
+
+/* ==========================================================================
+   7. PROGRAM SECTION
+   ========================================================================== */
+.program-section {
+  background: var(--blush);
+  padding: 60px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.program-title {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(34px, 8vw, 50px);
+  color: var(--crimson);
+  margin-bottom: 40px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.program-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  max-width: 340px;
+  margin: 0 auto 36px;
+  text-align: left;
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: 0.8s;
+}
+
+.prog-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+  line-height: 1;
+  color: var(--crimson);
+}
+
+.prog-info h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: clamp(20px, 5vw, 26px);
+  color: var(--crimson);
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.prog-info p {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: clamp(11px, 3vw, 13px);
+  letter-spacing: 0.1em;
+  color: var(--crimson);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.prog-info small {
+  font-size: 12px;
+  color: var(--light-crimson);
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.prog-curve {
+  display: block;
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(to bottom, var(--crimson), transparent);
+  margin: 0 auto -20px;
+}
+
+/* ==========================================================================
+   8. COUNTDOWN SECTION
+   ========================================================================== */
+.countdown-section {
+  background: var(--white);
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.countdown-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: clamp(12px, 3vw, 14px);
+  letter-spacing: 0.25em;
+  color: var(--crimson);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.countdown-grid {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+
+.count-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.count-circle {
+  width: 70px; 
+  height: 70px;
+  border: 2px solid var(--crimson);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--crimson);
+  margin-bottom: 8px;
+}
+
+.count-label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--crimson);
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   9. MAP SECTION
+   ========================================================================== */
+.map-section {
+  padding: 0;
+  background: var(--white);
+  border-bottom: #8B1A2A solid 2px;
+}
+
+.map-frame {
+  width: 100%;
+  height: 280px;
+  border: none;
+  filter: sepia(30%) hue-rotate(-10deg) saturate(1.2);
+}
+
+/* ==========================================================================
+   10. RSVP SECTION
+   ========================================================================== */
+.rsvp-section {
+  background: var(--blush);
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.rsvp-title {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(34px, 8vw, 50px);
+  color: var(--crimson);
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.rsvp-text {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 13px;
+  color: var(--crimson);
+  line-height: 1.8;
+  margin-bottom: 30px;
+  opacity: 0;
+  transition: opacity 0.8s ease 0.2s;
+}
+
+.rsvp-form {
+  max-width: 380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  opacity: 0;
+  transition: opacity 0.8s ease 0.3s;
+}
+
+.rsvp-input, .rsvp-select {
+  border: 1.5px solid var(--crimson);
+  border-radius: 50px;
+  padding: 14px 24px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  color: var(--crimson);
+  background: var(--white);
+  outline: none;
+}
+
+.rsvp-input::placeholder { 
+  color: rgba(139, 26, 42, 0.5); 
+}
+
+.rsvp-input:focus {
+  border-color: var(--dark-crimson);
+  box-shadow: 0 0 0 3px rgba(139, 26, 42, 0.1);
+}
+
+.rsvp-radio-group {
+  text-align: left;
+  padding: 0 8px;
+}
+
+.rsvp-radio-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  color: var(--crimson);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.rsvp-radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--crimson);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  margin-bottom: 10px;
+}
+
+.rsvp-radio input { 
+  display: none; 
+}
+
+.radio-dot {
+  width: 22px; 
+  height: 22px;
+  border: 2px solid var(--crimson);
+  border-radius: 50%;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.rsvp-radio input:checked + .radio-dot {
+  background: var(--crimson);
+}
+
+.rsvp-radio input:checked + .radio-dot::after {
+  content: ''; 
+  width: 12px; 
+  height: 12px; 
+  background: var(--white); 
+  border-radius: 50%;
+}
+
+.rsvp-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%238B1A2A'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 20px center;
+  cursor: pointer;
+}
+
+.rsvp-submit {
+  background: var(--crimson);
+  color: var(--white);
+  border: none;
+  border-radius: 50px;
+  padding: 16px 40px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  align-self: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.rsvp-submit:hover { background: var(--dark-crimson); transform: scale(1.02); }
+.rsvp-submit:active { transform: scale(0.98); }
+
+.success-msg {
+  display: none;
+  font-family: 'Great Vibes', cursive;
+  font-size: 28px;
+  color: var(--crimson);
+  margin-top: 16px;
+}
+
+/* ==========================================================================
+   11. FOOTER SECTION
+   ========================================================================== */
+.footer-section {
+  background: var(--blush);
+  padding: 60px 24px 30px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer-cursive {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(28px, 7vw, 40px);
+  color: var(--crimson);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.footer-ampersand {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(40px, 10vw, 60px);
+  color: rgba(139, 26, 42, 0.2);
+  line-height: 1;
+}
+
+.footer-divider {
+  width: 60px;
+  height: 1px;
+  background: var(--crimson);
+  margin: 20px auto;
+  opacity: 0.3;
+}
+
+.footer-promo {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--crimson);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+.footer-social {
+  display: flex;
+  justify-content: center;
+  
+  gap: 32px;
+  margin-bottom: 20px;
+}
+
+.footer-social a {
+  color: var(--crimson);
+  text-decoration: none;
+  font-size: 13px;
+  font-family: 'Montserrat', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.social-icon { 
+  font-size: 26px; 
+}
+
+.footer-copy {
+  font-size: 11px;
+  color: rgba(139, 26, 42, 0.5);
+  font-family: 'Montserrat', sans-serif;
+  margin-top: 16px;
+}
+
+.made-with {
+  font-size: 11px;
+  color: rgba(139, 26, 42, 0.4);
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+   12. ANIMATION TIMINGS & KEYFRAMES
+   ========================================================================== */
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bloomIn {
+  from { opacity: 0; transform: scale(0.6) rotate(-10deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes riseUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(40px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes floating {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes sway {
+  from { transform: translateY(0) rotate(330deg); }
+  to { transform: translateY(6px) rotate(332deg); }
+}
+@keyframes sway1 {
+  from { transform: translateY(0) rotate(-22deg); }
+  to { transform: translateY(6px) rotate(-12deg); }
+}
+
+@keyframes dady {
+  from { transform: translateY(0); }
+  to   { transform: translateY(6px); }
+}
+
+@keyframes floatLeft {
+  from { transform: translateY(0); }
+  to   { transform: translateY(6px); }
+}
+
+@keyframes floatRight {
+  from { transform: translateY(0); }
+  to   { transform: translateY(6px); }
+}
+
+
+/* Intersection Observer / Class triggers */
+.visible {
+  opacity: 1 !important;
+  transform: translate(0,0) scale(1) !important;
+}
+.program-item.visible { transform: translateX(0) !important; }
+.venue-img-card.visible { transform: scale(1) !important; }
+.count-item.visible { transform: scale(1) !important; }
+
+/* 1. Анимация появления (чуть уменьшили шаг для мобилок, чтобы не ломало экран) */
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px); /* 40px достаточно для красивого эффекта на телефонах */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 2. Поведение на компьютерах (базовые стили) */
+.fl_top_right {
+  position: absolute;
+  top: 15%;
+  right: -15%;
+  width: 60%;
+  z-index: 1;
+  opacity: 0;
+  animation: fadeInRight 1.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation-delay: 0.4s;
+}
+
+/* 3. АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ (Экраны меньше 768px) */
+@media (max-width: 768px) {
+  .fl_top_right {
+    top: 12%;       /* Корректируем высоту на мобильном, чтобы не перекрывал имя */
+    right: -20%;     /* Снижаем вылет за экран, чтобы телефон не паниковал */
+    width: 65%;      /* Делаем цветок чуть меньше, чтобы он пропорционально смотрелся */
+  }
+}
+
+/* 4. Обязательное правило для родительского контейнера (всей секции) */
+.hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* Этот параметр ЖЕСТКО запрещает элементам растягивать мобильный экран вбок */
+}
+/* 1. Анимация появления слева для мобилок и ПК */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px); /* Мягкий сдвиг слева */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 2. Поведение на компьютерах */
+.fl_top_left {
+  position: absolute;
+  top: 5%;
+  left: -10%;
+  width: 60%;
+  z-index: 3;
+  opacity: 0;
+  animation: fadeInLeft 1.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation-delay: 0.2s; /* Твоя оригинальная задержка */
+}
+
+/* 3. Адаптация под телефоны (экраны меньше 768px) */
+@media (max-width: 768px) {
+  .fl_top_left {
+    top: 0%;
+    left: -30%;    /* Чуть уменьшаем вылет, чтобы не ломался экран смартфона */
+    width: 65%;   /* Пропорционально уменьшаем размер цветка */
+  }
+}
+.venue-img-card {
+  width: 220px;
+  height: 290px;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(139, 26, 42, 0.15);
+  display: block;
+  margin: 0 auto 20px;
+
+  transform: scale(0.9);
+  background: var(--blush);
+  transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+}
+.venue-img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+
+ .program-section {
+            position: relative;
+            padding: 0;
+            background: var(-blush);
+            overflow: hidden;
+        }
+
+        .program-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 45px;
+            color: var(--crimson);
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .path-container {
+            position: relative;
+            min-height: 1600px;
+        }
+
+        .path-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #heart-follower {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            z-index: 10;
+            pointer-events: none;
+            transition: transform 0.1s linear;
+            filter: drop-shadow(0 2px 5px rgba(139,26,42,0.3));
+        }
+
+        .program-item {
+            position: relative;
+            z-index: 5;
+            width: 48%; 
+            margin-bottom: 150px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .item-left {
+            margin-left: 5%;
+            text-align: start;
+        }
+
+        .item-right {
+            margin-left: 38%;
+            text-align: left;
+        }
+
+        .program-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .prog-time {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px;
+            font-weight: 600;
+            color: var(--crimson);
+            display: block;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+
+        .prog-desc h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--crimson);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .prog-desc p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-dark);
+            font-weight: 300;
+        }
+  
+        * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.wrap-main {
+    background-color: var(--blush);
+    width: 100%;
+    max-width: 500px;
+    min-height: 80vh;
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.box-form {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.title-main {
+    font-family: 'Great Vibes', cursive;
+    color: #831c2d;
+    font-size: 3rem;
+    margin-bottom: 25px;
+}
+
+.text-desc {
+    color: #831c2d;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 40px;
+}
+
+.field {
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+input[type="text"],
+input[type="tel"] {
+    width: 100%;
+    padding: 18px 25px;
+    border: 2px solid #831c2d;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    color: #831c2d;
+    background: transparent;
+    outline: none;
+}
+
+.attend-block {
+    margin-top: 30px;
+}
+
+.attend-title {
+    font-size: 1.1rem;
+    color: #831c2d;
+    margin-bottom: 20px;
+}
+
+.radio-box {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: #831c2d;
+    position: relative;
+}
+
+.radio-item input {
+    position: absolute;
+    opacity: 0;
+}
+
+.radio-ui {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #831c2d;
+    border-radius: 50%;
+    margin-right: 15px;
+    position: relative;
+}
+
+.radio-item input:checked ~ .radio-ui {
+    background: #831c2d;
+}
+
+.radio-item input:checked ~ .radio-ui::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: #f6eae9;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.counter-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 2px solid #831c2d;
+    border-radius: 50px;
+    padding: 6px;
+    background: #fff;
+}
+
+.counter-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    background: transparent;
+    color: #831c2d;
+    cursor: pointer;
+}
+
+#guests-count {
+    width: 60px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    color: #831c2d;
+    font-weight: 600;
+}
+
+.hidden-block {
+    display: none;
+}
+
+.show-block {
+    display: block;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 18px;
+    background: #831c2d;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.send-msg {
+    display: none;
+    margin-top: 20px;
+    text-align: center;
+    color: #831c2d;
+    font-weight: 600;
+}
+
+.send-msg.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* SVG */
+.checkmark {
+    width: 69px;
+    height: 69px;
+    stroke: #831c2d;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    margin-bottom: 10px;
+}
+
+/* круг */
+.checkmark-circle {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* галочка */
+.checkmark-check {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+}
+
+/* запуск анимации */
+.send-msg.show .checkmark-circle {
+    animation: drawCircle 0.6s ease forwards;
+}
+
+.send-msg.show .checkmark-check {
+    animation: drawCheck 0.4s ease 0.6s forwards;
+}
+
+@keyframes drawCircle {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
+}
+
+.send-msg.hide {
+    animation: slideRight 0.6s ease forwards;
+}
+
+@keyframes slideRight {
+    0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(120px) scale(0.9);
+    }
+}
+
+.social-icon img{
+width: 35px;
+height: 35px;
+}
+
+.footer_AS img{
+  width: 27px;
+  height: 27px;
+margin: 8px 0 0 0;
+}
