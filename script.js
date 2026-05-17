@@ -4,10 +4,11 @@ window.addEventListener("load", () => {
   window.scrollTo(0, 0);
 });
 
-// Countdown timer
+// ==========================================================================
+// 1. COUNTDOWN TIMER
+// ==========================================================================
 function updateCountdown() {
-  // Обновленная дата: 19 июля 2026, 16:00
-  const target = new Date('2026-07-19T16:00:00+06:00').getTime();
+  const target = new Date('2026-07-19T17:00:00+06:00').getTime();
   const now = Date.now();
   const diff = target - now;
 
@@ -29,11 +30,9 @@ function updateCountdown() {
   document.getElementById('cd-mins').textContent = mins;
   document.getElementById('cd-secs').textContent = secs;
 
-  // Добавляем правильные склонения слов
   updateLabels(days, hours, mins, secs);
 }
 
-// Функция для склонения существительных
 function getWordForm(number, one, two, five) {
   let n = Math.abs(number) % 100;
   if (n >= 5 && n <= 20) return five;
@@ -55,7 +54,9 @@ function updateLabels(d, h, m, s) {
 updateCountdown();
 setInterval(updateCountdown, 1000);
 
-// Scroll animation
+// ==========================================================================
+// 2. SCROLL ANIMATION (Intersection Observer)
+// ==========================================================================
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -74,18 +75,30 @@ document.querySelectorAll('[data-animate]').forEach(el => {
   observer.observe(el);
 });
 
-// Music
-// --- ИСПРАВЛЕННЫЙ БЛОК ИНТЕРАКТИВА ОВЕРЛЕЯ И МУЗЫКИ ---
+// ==========================================================================
+// 3. INTRO OVERLAY, MUSIC & FORM INTERACTIVE
+// ==========================================================================
 document.addEventListener("DOMContentLoaded", function() {
   const introOverlay = document.getElementById("intro-overlay");
-  const envelopeLink = document.getElementById("envelope-link"); // Наш конверт-ссылка
+  const envelopeLink = document.getElementById("envelope-link");
   const bgMusic = document.getElementById("bg-music");
   const musicBtn = document.getElementById("music-btn");
 
-  // Блокируем скролл сайта изначально, чтобы гость не крутил пустую страницу
+  const attendanceInputs = document.querySelectorAll('input[name="attendance"]');
+  const guestsGroup = document.getElementById('guests-count-group');
+  const countInput = document.getElementById('guests-count');
+  const btnMinus = document.getElementById('btn-minus');
+  const btnPlus = document.getElementById('btn-plus');
+  const phoneInput = document.getElementById('phone');
+
+  const form = document.getElementById('guest-form');
+  const sendMsg = document.getElementById('send-msg');
+  const submitBtn = document.querySelector('.btn-submit');
+
+  // Сайт ачылганда скроллду блоктоо
   document.body.classList.add("no-scroll");
 
-  // Функция плавного нарастания громкости (Fade-in) для красоты
+  // Музыканы жай баштоо (Fade-in)
   function fadeInMusic(audioElement, duration = 2000) {
     audioElement.volume = 0;
     audioElement.play().then(() => {
@@ -99,10 +112,10 @@ document.addEventListener("DOMContentLoaded", function() {
         }
       }
       requestAnimationFrame(animateVolume);
-    }).catch(err => console.log("Браузер заблокировал автоплей:", err));
+    }).catch(err => console.log("Браузер автоплейди блоктоду:", err));
   }
 
-  // Функция переключения музыки Плей / Пауза на самом сайте
+  // Музыканы жандыруу / өчүрүү баскычы
   function handleToggleMusic() {
     if (!bgMusic || !musicBtn) return;
 
@@ -113,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function() {
           musicBtn.classList.add('playing');
           bgMusic.volume = 1;
         })
-        .catch(err => console.log("Ошибка воспроизведения: ", err));
+        .catch(err => console.log("Ката кетти: ", err));
     } else {
       bgMusic.pause();
       musicBtn.textContent = '🎵';
@@ -129,204 +142,128 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // КЛИК ПО КОНВЕРТУ (Исчезновение + старт музыки и сайта)
+  // Конвертти басканда оверлейдин жоголушу
   if (envelopeLink && introOverlay && bgMusic) {
     envelopeLink.addEventListener("click", function(e) {
       e.preventDefault();
-      
-      // Защита от повторных кликов
       envelopeLink.style.pointerEvents = "none";
-
-      // 1. Запускаем анимацию исчезновения самого конверта
       envelopeLink.classList.add("fade-out");
 
-      // 2. Включаем трек с красивым нарастанием звука
       fadeInMusic(bgMusic, 2500);
       if (musicBtn) {
         musicBtn.textContent = '🔊';
         musicBtn.classList.add('playing');
       }
 
-      // 3. Через 1 секунду плавно гасим и убираем весь темный фон
       setTimeout(() => {
         introOverlay.classList.add("hidden");
-        document.body.classList.remove("no-scroll"); // Разрешаем скроллить сайт!
+        document.body.classList.remove("no-scroll");
       }, 1000);
 
-      // 4. Через 2.2 секунды полностью удаляем оверлей из разметки, чтобы не мешал
       setTimeout(() => {
         introOverlay.style.display = "none";
       }, 2200);
     });
   }
-});
-// RSVP
-function submitRSVP() {
-  const name = document.getElementById('rsvp-name').value.trim();
-  const success = document.getElementById('success-msg');
-  const button = document.querySelector('.rsvp-submit');
 
-  if (!name) {
-    const input = document.getElementById('rsvp-name');
-    input.focus();
-    input.style.borderColor = '#E53935';
-    setTimeout(() => {
-      input.style.borderColor = 'var(--crimson)';
-    }, 1500);
-    return;
+  // Телефон номерин текшерүү (сандар гана)
+  if (phoneInput) {
+    phoneInput.addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9+() \s-]/g, '');
+    });
   }
 
-  success.style.display = 'block';
-  button.style.display = 'none';
-  success.style.opacity = '0';
-
-  setTimeout(() => {
-    success.style.transition = '0.5s';
-    success.style.opacity = '1';
-  }, 100);
-}
-
-
-    // 2. Scroll Animation for Program Items
-    const programObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { threshold: 0.15 });
-
-    document.querySelectorAll('.program-item').forEach(el => programObserver.observe(el));
-
-    // 3. Heart Path Animation
-    const heart = document.getElementById('heart-follower');
-    const path = document.getElementById('scroll-path');
-    const pathLength = path.getTotalLength();
-    const scrollSection = document.getElementById('scroll-section');
-
-    function animateHeart() {
-        if (!scrollSection) return;
-        const rect = scrollSection.getBoundingClientRect();
-        const viewHeight = window.innerHeight;
-        
-        let progress = (viewHeight / 2 - rect.top) / rect.height;
-        progress = Math.max(0, Math.min(1, progress));
-
-        const point = path.getPointAtLength(progress * pathLength);
-        
-        heart.style.left = point.x + 'px';
-        heart.style.top = point.y + 'px';
-        
-        const rotateVal = Math.sin(progress * Math.PI * 6) * 15;
-        heart.style.transform = `translate(-50%, -50%) rotate(${rotateVal}deg)`;
-    }
-
-    window.addEventListener('scroll', animateHeart);
-    window.addEventListener('resize', animateHeart);
-    requestAnimationFrame(animateHeart);
-
-    document.addEventListener('DOMContentLoaded', function () {
-
-    const attendanceInputs = document.querySelectorAll('input[name="attendance"]');
-    const guestsGroup = document.getElementById('guests-count-group');
-
-    const countInput = document.getElementById('guests-count');
-    const btnMinus = document.getElementById('btn-minus');
-    const btnPlus = document.getElementById('btn-plus');
-    const phoneInput = document.getElementById('phone');
-
-    phoneInput.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9+() \s-]/g, '');
+  // Коноктордун саны блогун көрсөтүү/жашыруу
+  attendanceInputs.forEach(input => {
+    input.addEventListener('change', function () {
+      if (this.value === 'yes') {
+        guestsGroup.classList.add('show-block');
+      } else {
+        guestsGroup.classList.remove('show-block');
+        countInput.value = 1;
+      }
     });
+  });
 
-    attendanceInputs.forEach(input => {
-        input.addEventListener('change', function () {
-            if (this.value === 'yes') {
-                guestsGroup.classList.add('show-block');
-            } else {
-                guestsGroup.classList.remove('show-block');
-                countInput.value = 1;
-            }
-        });
-    });
-
+  // Плюс / Минус баскычтары
+  if (btnMinus && btnPlus && countInput) {
     btnMinus.addEventListener('click', function () {
-        let val = parseInt(countInput.value) || 1;
-        if (val > 1) countInput.value = val - 1;
+      let val = parseInt(countInput.value) || 1;
+      if (val > 1) countInput.value = val - 1;
     });
 
     btnPlus.addEventListener('click', function () {
-        let val = parseInt(countInput.value) || 1;
-        if (val < 10) countInput.value = val + 1;
+      let val = parseInt(countInput.value) || 1;
+      if (val < 10) countInput.value = val + 1;
     });
+  }
 
-});
+  // Telegram-га билдирүү жөнөтүү
+  if (form) {
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault(); 
 
-document.addEventListener('DOMContentLoaded', function () {
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const selected = document.querySelector('input[name="attendance"]:checked');
 
-    const form = document.getElementById('guest-form');
-    const sendMsg = document.getElementById('send-msg');
+      if (!name || !phone || !selected) return;
 
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+      let attendanceText = '';
+      if (selected.value === 'yes') {
+        const guestsCount = document.getElementById('guests-count').value;
+        attendanceText = `Ооба, кубануу менен барамын ✅\n👥 *Коноктордун саны:* ${guestsCount} киши`;
+      } else {
+        attendanceText = `Тилекке каршы, бара албайм ❌`;
+      }
 
-        sendMsg.classList.add('show');
-        sendMsg.classList.remove('hide');
+      const text =
+        `*Новая заявка *\n\n` +
+        `👤 *ФИО:* ${name}\n` +
+        `📞 *Телефон:* ${phone}\n` +
+        `📊 *Статус:* ${attendanceText}`;
 
-        form.reset();
+      if (submitBtn) submitBtn.disabled = true;
 
-        setTimeout(() => {
-            sendMsg.classList.add('hide');
-
-            setTimeout(() => {
-                sendMsg.classList.remove('show');
-                sendMsg.classList.remove('hide');
-            }, 600);
-
-        }, 2500);
-    });
-
-});
-
-
-// бб
-document.getElementById('guest-form').addEventListener('submit', function (e) {
-    e.preventDefault(); // Чтобы страница не перезагружалась
-
-    // 1. Подставьте сюда свои данные из Шагов 1 и 2:
-    const tgToken = "8147402440:AAHFZpIrViUZ-GHMSDPky1x3-FqBR-h6Y4A";
-    const tgChatId = "8242291287";
-
-    // 2. Собираем данные из полей:
-    const name = document.getElementById('name').value;
-    const phone = document.getElementById('phone').value;
-    const attendance = document.querySelector('input[name="attendance"]:checked').value === 'yes' ? '✅ Придет' : '❌ Не смогу';
-    
-    // Смотрим количество гостей (если блок показан):
-    const guestsGroup = document.getElementById('guests-count-group');
-    const guestsCount = !guestsGroup.classList.contains('hidden-group') ? document.getElementById('guests-count').value : 0;
-
-    // 3. Формируем текст сообщения:
-    let text = `🔔 *Новый ответ!*\n\n`;
-    text += `👤 *Имя:* ${name}\n`;
-    text += `📞 *Тел:* ${phone}\n`;
-    text += `❓ *Статус:* ${attendance}\n`;
-    if (guestsCount > 0) {
-        text += `👨‍👩‍👧‍👦 *Количество мест:* ${guestsCount}\n`;
-    }
-
-    // 4. Отправляем в Telegram:
-    fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: tgChatId,
+      try {
+        await fetch(`https://api.telegram.org/bot8147402440:AAHFZpIrViUZ-GHMSDPky1x3-FqBR-h6Y4A/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: "8242291287",
             text: text,
             parse_mode: "Markdown"
-        })
-    })
+          })
+        });
 
+        if (sendMsg) {
+          sendMsg.classList.add('show');
+          sendMsg.classList.remove('hide');
+        }
+        if (submitBtn) submitBtn.style.display = 'none';
+        
+        form.reset();
+        if (guestsGroup) guestsGroup.classList.remove('show-block');
+        
+        setTimeout(() => {
+          if (sendMsg) {
+            sendMsg.classList.add('hide');
+            setTimeout(() => {
+              sendMsg.classList.remove('show');
+              sendMsg.classList.remove('hide');
+              if (submitBtn) {
+                submitBtn.style.display = 'block';
+                submitBtn.disabled = false;
+              }
+            }, 600);
+          }
+        }, 2500);
+
+      } catch (err) {
+        console.error("Telegram error:", err);
+        if (submitBtn) submitBtn.disabled = false;
+        alert("Ката кетти. Кайра аракет кылык көрүңүз.");
+      }
+    });
+  }
 });
-
-

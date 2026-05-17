@@ -683,9 +683,13 @@ body.no-scroll {
 /* ==========================================================================
    5. INVITATION TEXT SECTION
    ========================================================================== */
+.invite-text-span{
+  font-size: 18px;
+}
+   
 .invite-section {
   background: var(--blush);
-  padding: 100px 24px;
+  padding:110px 24px 25px 24px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -742,9 +746,36 @@ body.no-scroll {
 /* ==========================================================================
    6. VENUE SECTION
    ========================================================================== */
+
+      .venue-sub_a1{
+
+      font-family: 'Montserrat', sans-serif;
+  font-size: 19px;            /* Мелкий размер как на фото */
+  font-weight: 600;           /* Средняя жирность */
+  text-transform: uppercase;  /* Все заглавные */
+  letter-spacing: 0.4em;      /* Сильный разлет букв для премиального вида */
+  color: var(--crimson);
+  padding-left: 175px;
+  /* ПОЗИЦИОНИРОВАНИЕ */
+  margin-bottom: 24px;
+  text-align: start;
+  display: block;             /* Чтобы margin работал корректно */
+
+  /* АНИМАЦИЯ ПОЯВЛЕНИЯ */
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+   }
+.countdown-section {
+  background: var(--white);
+  padding: 30px 24px 60px 24px;
+  text-align: center;
+}
+
+    
 .venue-section {
   background: var(--white);
-  padding: 60px 35px;
+  padding: 60px 35px 30px 35px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -842,88 +873,12 @@ font-size: 50px;
   transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
 }
 
-/* ==========================================================================
-   7. PROGRAM SECTION
-   ========================================================================== */
-.program-section {
-  background: var(--blush);
-  padding: 60px 24px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.program-title {
-  font-family: 'Great Vibes', cursive;
-  font-size: clamp(34px, 8vw, 50px);
-  color: var(--crimson);
-  margin-bottom: 40px;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-
-.program-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  max-width: 340px;
-  margin: 0 auto 36px;
-  text-align: left;
-  opacity: 0;
-  transform: translateX(-30px);
-  transition: 0.8s;
-}
-
-.prog-icon {
-  font-size: 32px;
-  flex-shrink: 0;
-  line-height: 1;
-  color: var(--crimson);
-}
-
-.prog-info h3 {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: clamp(20px, 5vw, 26px);
-  color: var(--crimson);
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
-}
-
-.prog-info p {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 300;
-  font-size: clamp(11px, 3vw, 13px);
-  letter-spacing: 0.1em;
-  color: var(--crimson);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.prog-info small {
-  font-size: 12px;
-  color: var(--light-crimson);
-  font-style: italic;
-  font-family: 'Cormorant Garamond', serif;
-}
-
-.prog-curve {
-  display: block;
-  width: 2px;
-  height: 60px;
-  background: linear-gradient(to bottom, var(--crimson), transparent);
-  margin: 0 auto -20px;
-}
 
 /* ==========================================================================
    8. COUNTDOWN SECTION
    ========================================================================== */
-.countdown-section {
-  background: var(--white);
-  padding: 60px 24px;
-  text-align: center;
-}
+
+
 
 .countdown-title {
   font-family: 'Montserrat', sans-serif;
@@ -1634,7 +1589,7 @@ input[type="tel"] {
 
 .send-msg.show {
     display: block;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.3s ease forwards;
 }
 
 @keyframes fadeIn {
@@ -1653,17 +1608,22 @@ input[type="tel"] {
     margin-bottom: 10px;
 }
 
-/* круг */
 .checkmark-circle {
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    stroke: #831c2d;
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
 }
 
-/* галочка */
 .checkmark-check {
-    stroke-dasharray: 50;
-    stroke-dashoffset: 50;
+    stroke: #831c2d;
+    stroke-width: 3;
+    fill: none;
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
 }
+
 
 /* запуск анимации */
 .send-msg.show .checkmark-circle {
@@ -1706,4 +1666,14 @@ height: 35px;
   width: 27px;
   height: 27px;
 margin: 8px 0 0 0;
+}
+
+.invite-name{
+    font-family: 'Great Vibes', cursive;
+  font-size:18px;
+  color: var(--crimson);
+
+  opacity: 0;
+  animation: fadeDown 1s ease forwards 0.6s;
+
 }
